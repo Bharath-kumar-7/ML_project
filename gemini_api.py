@@ -1,14 +1,13 @@
 import google.generativeai as genai
 import json
 import re
-
+import os
 
 class GeminiCricketAPI:
     def __init__(self):
         # 🔐 Configure API key
-        genai.configure(
-            api_key="AIzaSyB5H6b-gUMM85dLzPatSEp004EDlyQPA74"
-        )
+        genai.configure(api_key=os.getenv("AIzaSyB5H6b-gUMM85dLzPatSEp004EDlyQPA74"))
+        
 
         # ✅ UPDATED MODEL (IMPORTANT)
         self.model = genai.GenerativeModel(

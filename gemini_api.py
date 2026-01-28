@@ -1,20 +1,18 @@
+
+import os
 import google.generativeai as genai
 import json
 import re
 
-
 class GeminiCricketAPI:
     def __init__(self):
-        # 🔐 Configure API key
         genai.configure(
-            api_key="AIzaSyB5H6b-gUMM85dLzPatSEp004EDlyQPA74"
+            api_key=os.getenv("GEMINI_API_KEY")
         )
 
-        # ✅ UPDATED MODEL (IMPORTANT)
         self.model = genai.GenerativeModel(
             model_name="models/gemini-1.5-flash"
         )
-
     def get_team_stats(self, team):
         prompt = f"""
 You are a cricket data analyst.

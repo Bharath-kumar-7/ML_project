@@ -11,8 +11,9 @@ class GeminiCricketAPI:
         )
         self.model = genai.GenerativeModel("models/gemini-1.5-flash")
 
+    # 👇 CRITICAL FIX: _self instead of self
     @st.cache_data(ttl=3600)
-    def get_team_stats(self, team):
+    def get_team_stats(_self, team):
         prompt = f"""
 Give recent IPL performance stats for {team}.
 Return ONLY valid JSON:
@@ -24,7 +25,7 @@ Return ONLY valid JSON:
 }}
 """
         try:
-            response = self.model.generate_content(prompt)
+            response = _self.model.generate_content(prompt)
             text = re.sub(r"```json|```", "", response.text).strip()
             return json.loads(text)
         except:

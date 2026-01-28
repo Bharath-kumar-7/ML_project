@@ -4,6 +4,7 @@ import base64
 import io
 from PIL import Image
 
+
 from model import IPLPredictor
 from gemini_api import GeminiCricketAPI
 

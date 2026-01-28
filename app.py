@@ -8,24 +8,24 @@ from PIL import Image
 from model import IPLPredictor
 from gemini_api import GeminiCricketAPI
 
-# ------------------ PAGE CONFIG ------------------
+# ---------------- PAGE ----------------
 st.set_page_config(page_title="IPL Match Predictor", layout="centered")
 st.title("🏏 IPL Match Win Predictor")
 
-# ------------------ BACKGROUND ------------------
+# ---------------- BACKGROUND ----------------
 def set_bg(image_file):
     img = Image.open(image_file)
-    buffered = io.BytesIO()
-    img.save(buffered, format="PNG")
-    encoded = base64.b64encode(buffered.getvalue()).decode()
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    encoded = base64.b64encode(buf.getvalue()).decode()
 
     st.markdown(
         f"""
         <style>
         .stApp {{
             background:
-                linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
-                url("data:image/png;base64,{encoded}");
+            linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)),
+            url("data:image/png;base64,{encoded}");
             background-size: cover;
         }}
         </style>
@@ -38,7 +38,7 @@ try:
 except:
     pass
 
-# ------------------ INIT ------------------
+# ---------------- INIT ----------------
 predictor = IPLPredictor()
 predictor.train()
 
@@ -46,14 +46,7 @@ api = GeminiCricketAPI()
 
 teams = ["CSK", "MI", "RCB", "KKR", "DC", "PBKS", "RR", "SRH", "GT", "LSG"]
 
-# ------------------ CACHE ALL TEAM STATS ------------------
-@st.cache_data(ttl=3600)
-def preload_stats(api, teams):
-    return {team: api.get_team_stats(team) for team in teams}
-
-stats_cache = preload_stats(api, teams)
-
-# ------------------ INPUTS ------------------
+# ---------------- INPUTS ----------------
 team1 = st.selectbox("Select Team 1", teams)
 team2 = st.selectbox("Select Team 2", teams)
 
@@ -66,19 +59,19 @@ venue = st.selectbox(
         "MA Chidambaram Stadium",
         "M Chinnaswamy Stadium",
         "Eden Gardens",
-        "Arun Jaitley Stadium",
         "Narendra Modi Stadium",
     ]
 )
 
 weather = st.selectbox("Weather", ["Clear", "Cloudy", "Hot", "Humid"])
 
-# ------------------ PREDICTION ------------------
+# ---------------- PREDICT ----------------
 if st.button("Predict Winner"):
-    with st.spinner("⚡ Crunching match analytics..."):
+    with st.spinner("⚡ Fetching team stats..."):
 
-        team1_stats = stats_cache[team1]
-        team2_stats = stats_cache[team2]
+        # ✅ SAFE: cached inside gemini_api.py
+        team1_stats = api.get_team_stats(team1)
+        team2_stats = api.get_team_stats(team2)
 
         features = np.array([[
             1 if toss == team1 else 0,
@@ -95,7 +88,6 @@ if st.button("Predict Winner"):
         winner = team1 if pred == 1 else team2
         confidence = max(prob) * 100
 
-    # ------------------ OUTPUT ------------------
     st.success(f"🏆 Predicted Winner: **{winner}**")
     st.info(f"📊 Winning Probability: **{confidence:.2f}%**")
 

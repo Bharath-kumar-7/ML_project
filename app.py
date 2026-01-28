@@ -12,25 +12,28 @@ from gemini_api import GeminiCricketAPI
 st.set_page_config(page_title="IPL Match Predictor", layout="centered")
 st.title("🏏 IPL Match Win Predictor")
 
-# ---------------- PAIR-BASED BACKGROUND ----------------
-def set_bg_by_match(team1, team2):
-    img_path_1 = f"images/{team1}_{team2}.avif"
-    img_path_2 = f"images/{team2}_{team1}.avif"
-    default_path = "images/default.avif"
+# ---------------- BACKGROUND PLACEHOLDER ----------------
+bg_slot = st.empty()
 
-    if os.path.exists(img_path_1):
-        img_path = img_path_1
-    elif os.path.exists(img_path_2):
-        img_path = img_path_2
+def set_bg_by_match(team1, team2):
+    img1 = f"images/{team1}_{team2}.avif"
+    img2 = f"images/{team2}_{team1}.avif"
+    default = "images/default.avif"
+
+    if os.path.exists(img1):
+        img_path = img1
+    elif os.path.exists(img2):
+        img_path = img2
     else:
-        img_path = default_path
+        img_path = default
 
     img = Image.open(img_path)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     encoded = base64.b64encode(buf.getvalue()).decode()
 
-    st.markdown(
+    # ✅ Clear previous CSS and inject new
+    bg_slot.markdown(
         f"""
         <style>
         .stApp {{
@@ -43,8 +46,7 @@ def set_bg_by_match(team1, team2):
         }}
         </style>
         """,
-        unsafe_allow_html=True,
-        key=f"bg_{team1}_{team2}"   # 🔥 forces refresh
+        unsafe_allow_html=True
     )
 
 # ---------------- INIT ----------------
@@ -59,7 +61,7 @@ teams = ["CSK", "MI", "RCB", "KKR", "DC", "PBKS", "RR", "SRH", "GT", "LSG"]
 team1 = st.selectbox("Select Team 1", teams)
 team2 = st.selectbox("Select Team 2", teams)
 
-# ✅ BACKGROUND CHANGES CORRECTLY NOW
+# ✅ BACKGROUND CHANGES HERE
 set_bg_by_match(team1, team2)
 
 toss = st.radio("Toss Winner", [team1, team2])
@@ -106,7 +108,6 @@ if st.button("Predict Winner"):
         ]])
 
         pred, prob = predictor.predict(features)
-
         winner = team1 if pred == 1 else team2
         confidence = max(prob) * 100
 

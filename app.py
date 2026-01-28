@@ -62,7 +62,6 @@ venue = st.selectbox(
         "Narendra Modi Stadium",
     ]
 )
-
 weather = st.selectbox("Weather", ["Clear", "Cloudy", "Hot", "Humid"])
 
 # ---------------- PREDICT ----------------

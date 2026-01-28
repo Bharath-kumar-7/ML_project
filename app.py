@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import base64
 import io
+import os
 from PIL import Image
 
 from model import IPLPredictor
@@ -11,14 +12,20 @@ from gemini_api import GeminiCricketAPI
 st.set_page_config(page_title="IPL Match Predictor", layout="centered")
 st.title("🏏 IPL Match Win Predictor")
 
-# ---------------- BACKGROUND (TEAM BASED) ----------------
-def set_bg_by_team(team):
-    path = f"images/{team}.avif"
-    try:
-        img = Image.open(path)
-    except:
-        img = Image.open("images/default.avif")
+# ---------------- PAIR-BASED BACKGROUND ----------------
+def set_bg_by_match(team1, team2):
+    img_path_1 = f"images/{team1}_{team2}.avif"
+    img_path_2 = f"images/{team2}_{team1}.avif"
+    default_path = "images/default.avif"
 
+    if os.path.exists(img_path_1):
+        img_path = img_path_1
+    elif os.path.exists(img_path_2):
+        img_path = img_path_2
+    else:
+        img_path = default_path
+
+    img = Image.open(img_path)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     encoded = base64.b64encode(buf.getvalue()).decode()
@@ -28,14 +35,16 @@ def set_bg_by_team(team):
         <style>
         .stApp {{
             background:
-            linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)),
-            url("data:image/png;base64,{encoded}");
+                linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)),
+                url("data:image/png;base64,{encoded}");
             background-size: cover;
             background-position: center;
+            transition: background 0.4s ease-in-out;
         }}
         </style>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
+        key=f"bg_{team1}_{team2}"   # 🔥 forces refresh
     )
 
 # ---------------- INIT ----------------
@@ -50,8 +59,8 @@ teams = ["CSK", "MI", "RCB", "KKR", "DC", "PBKS", "RR", "SRH", "GT", "LSG"]
 team1 = st.selectbox("Select Team 1", teams)
 team2 = st.selectbox("Select Team 2", teams)
 
-# 🔥 Background updates instantly when team changes
-set_bg_by_team(team1)
+# ✅ BACKGROUND CHANGES CORRECTLY NOW
+set_bg_by_match(team1, team2)
 
 toss = st.radio("Toss Winner", [team1, team2])
 
@@ -101,11 +110,9 @@ if st.button("Predict Winner"):
         winner = team1 if pred == 1 else team2
         confidence = max(prob) * 100
 
-    # ---------------- RESULT ----------------
     st.success(f"🏆 Predicted Winner: **{winner}**")
     st.info(f"📊 Winning Probability: **{confidence:.2f}%**")
 
-    # ---------------- CLASSIC STATS TABLE ----------------
     st.subheader("📈 Team Comparison")
 
     st.markdown(
@@ -115,29 +122,16 @@ if st.button("Predict Winner"):
             padding:18px;
             border-radius:16px;
             box-shadow:0 12px 30px rgba(0,0,0,0.6);
-            margin-top:10px;
         ">
         <table style="width:100%; border-collapse:collapse; color:#f8fafc;">
             <tr style="border-bottom:1px solid #334155;">
-                <th style="text-align:left; padding:10px;">Metric</th>
-                <th style="padding:10px;">{team1}</th>
-                <th style="padding:10px;">{team2}</th>
+                <th align="left">Metric</th>
+                <th>{team1}</th>
+                <th>{team2}</th>
             </tr>
-            <tr>
-                <td style="padding:10px;">Batting Average</td>
-                <td style="text-align:center;">{team1_stats["batting_avg"]}</td>
-                <td style="text-align:center;">{team2_stats["batting_avg"]}</td>
-            </tr>
-            <tr>
-                <td style="padding:10px;">Bowling Average</td>
-                <td style="text-align:center;">{team1_stats["bowling_avg"]}</td>
-                <td style="text-align:center;">{team2_stats["bowling_avg"]}</td>
-            </tr>
-            <tr>
-                <td style="padding:10px;">Recent Form</td>
-                <td style="text-align:center;">{team1_stats["recent_form"]}</td>
-                <td style="text-align:center;">{team2_stats["recent_form"]}</td>
-            </tr>
+            <tr><td>Batting Average</td><td align="center">{team1_stats["batting_avg"]}</td><td align="center">{team2_stats["batting_avg"]}</td></tr>
+            <tr><td>Bowling Average</td><td align="center">{team1_stats["bowling_avg"]}</td><td align="center">{team2_stats["bowling_avg"]}</td></tr>
+            <tr><td>Recent Form</td><td align="center">{team1_stats["recent_form"]}</td><td align="center">{team2_stats["recent_form"]}</td></tr>
         </table>
         </div>
         """,
